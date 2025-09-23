@@ -9,9 +9,6 @@ import (
 )
 
 func main(){
-	
-	
-
 	if len(os.Args) < 2 {
 		println("Usage: broadcast-server start|connect")
 		return

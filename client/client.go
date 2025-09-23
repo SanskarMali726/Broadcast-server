@@ -16,10 +16,24 @@ func Startclient() {
 	defer conn.Close()
 	fmt.Println("Connected to the server ")
 
+	go func(){
+		buffer := make([]byte,1024)
+		for{
+			n,err :=conn.Read(buffer)
+			if err != nil{
+				fmt.Println("Error while Reading msg from :",conn.RemoteAddr(),"Error is:",err)
+				return
+		}
+		message := string(buffer[:n])
+		fmt.Print(message)
+		//fmt.Println("Enter the msg:")
+		}
+	}()
+
 	reader := bufio.NewReader(os.Stdin)
 	for {
 
-		fmt.Println("Enter the msg:")
+		//fmt.Println("Enter the msg:")
 		var message string
 		message,err = reader.ReadString('\n')
 		if err != nil{
