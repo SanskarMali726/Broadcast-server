@@ -1,17 +1,20 @@
 package servers
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/joho/godotenv"
 )
 
-var clients []net.Conn
+var clients = make(map[net.Conn]string)
 var clientsMutex sync.Mutex
+
 func Startserver(){
 	err := godotenv.Load(".env")
 	if err != nil{
@@ -36,10 +39,6 @@ func Startserver(){
 			return
 		}
 		fmt.Println("Client connected",conn.RemoteAddr())
-		clientsMutex.Lock()
-		clients = append(clients, conn)
-		clientsMutex.Unlock()
-
 		go handleclient(conn)
 
 	}
@@ -56,6 +55,24 @@ func handleclient(conn net.Conn){
 		conn.Close()
 	}()
 
+	reader := bufio.NewReader(conn)
+	var username string
+	for{
+		conn.Write([]byte("Enter your username:"))
+		name,_ := reader.ReadString('\n')
+		name = strings.TrimSpace(name)
+		if isNameTaken(name){
+			conn.Write([]byte("This name already taken.Try other"))
+			continue
+		}else{
+			username = name
+			clientsMutex.Lock()
+			clients[conn] = username
+			clientsMutex.Unlock()
+			break
+		}
+	}
+
 	buffer := make([]byte,1024)
 	for{
 
@@ -64,12 +81,13 @@ func handleclient(conn net.Conn){
 			fmt.Println("Error at reading:",err)
 			return 
 		}
+		
 		message := string(buffer[:n])
-		fmt.Printf("[%s]: %s\n", conn.RemoteAddr(), message)
+		fmt.Printf("[%s]: %s\n",username, message)
 
-		for _,cli := range clients {
-			if cli != conn {
-				_,err = cli.Write([]byte(fmt.Sprintf("[%s]: %s", conn.RemoteAddr(), message)))
+		for co,cli := range clients {
+			if cli != username {
+				_,err = co.Write([]byte(fmt.Sprintf("[%s]: %s",username, message)))
 				if err != nil{
 					fmt.Println("Error while sendig to client",err)
 				}
@@ -78,16 +96,18 @@ func handleclient(conn net.Conn){
 
 	}	
 
+}
 
+func isNameTaken(name string)bool{
+	for _,v := range clients{
+		if v == name{
+			return true
+		}
+	}
+	return false
 }
 
 
-
 func removeclient(conn net.Conn){
-	for i,c := range clients{
-		if c == conn{
-			clients = append(clients[:i],clients[i+1:]...)
-			break
-		} 
-	}
+	delete(clients,conn)
 }
