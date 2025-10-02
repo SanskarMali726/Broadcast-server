@@ -51,8 +51,6 @@ func handleclient(conn net.Conn) {
 		conn.Close()
 	}()
 
-	key := os.Getenv("KEY")
-
 	var username string
 	for {
 		conn.Write([]byte("Enter your username:"))
@@ -109,15 +107,17 @@ func handleclient(conn net.Conn) {
 			continue
 		}
 		
-		nonce := buffer[:12]
-		finalmsg := buffer[12:]
+		key := buffer[:32]
+		nonce := buffer[32:32+12]
+		finalmsg := buffer[32+12:]
 
-		msg, err := encryption.Decrypt([]byte(key), nonce, finalmsg)
+		msg, err := encryption.Decrypt(key, nonce, finalmsg)
 		if err != nil {
 			fmt.Println("Error while decrypting", err)
 			return
 		}
-		fmt.Printf("[%s]: %s\n", username, string(msg))
+
+		fmt.Printf("[%s]: %s\n", username, string(buffer))
 
 		clientsMutex.Lock()
 		for co, cli := range clients {

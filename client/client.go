@@ -2,6 +2,7 @@ package client
 
 import (
 	"bufio"
+	"crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -10,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/SanskarMali726/Broadcast-server/encryption"
-	"github.com/joho/godotenv"
 )
 
 func Startclient() {
@@ -22,14 +22,6 @@ func Startclient() {
 	defer conn.Close()
 	fmt.Println("Connected to the server")
 	
-	err = godotenv.Load()
-	if err != nil {
-		fmt.Println("Error while loading env variable", err)
-		return
-	}
-
-	key := os.Getenv("KEY")
-
 	buffer := make([]byte, 1024)
 	n, err := conn.Read(buffer)
 	if err != nil {
@@ -80,13 +72,20 @@ func Startclient() {
 			continue
 		}
 
-		msg, nonce, err := encryption.Encrypt([]byte(key), message)
+		key := make([]byte,32)
+		_,err = rand.Read(key)
+		if err != nil{
+			fmt.Println(err)
+			return 
+		}
+
+		msg, nonce, err := encryption.Encrypt(key, message)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		finalmsg := append(nonce, msg...)
+		finalmsg := append(append(key,nonce...),msg...)
 		length := uint32(len(finalmsg))
 
 
