@@ -47,7 +47,7 @@ PORT=:9000
 
 Run the server using:
 ```bash
-go run main.go server
+go run main.go start
 ```
 
 The server will start listening on the port specified in your `.env` file (default: 9000).
@@ -56,7 +56,7 @@ The server will start listening on the port specified in your `.env` file (defau
 
 In a new terminal, run:
 ```bash
-go run main.go client
+go run main.go connect
 ```
 
 You'll be prompted to enter a username. Once connected, you can start sending messages.
@@ -130,21 +130,21 @@ This is **NOT** end-to-end encryption. The current implementation has significan
 
 ```
 Server Terminal:
-$ go run main.go server
+$ go run main.go start
 connect to the server on port :9000
 Client connected 127.0.0.1:54321
 [Alice]: Hello everyone!
 [Bob]: Hi Alice!
 
 Client 1 Terminal:
-$ go run main.go client
+$ go run main.go connect
 Connected to the server
 Enter your username: Alice
 Hello everyone!
 [Bob]: Hi Alice!
 
 Client 2 Terminal:
-$ go run main.go client
+$ go run main.go connect
 Connected to the server
 Enter your username: Bob
 [Alice]: Hello everyone!
